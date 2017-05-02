@@ -11,20 +11,20 @@ csvname  = 'eurofxref.csv'
 filename = 'eurofxref.zip'
 ecb_url = 'https://www.ecb.europa.eu/stats/eurofxref/eurofxref.zip'
 updated = 0
+refresh_threshold = 24*60*60
 
 
-def load(path='data/', refresh_threshold=24*60*60):
+def load(path='data/'):
 	fullname = os.path.join(path, filename)
-	global updated
-	if time.time() - updated > refresh_threshold:
-		try:
-			r = requests.get(ecb_url)
-			if r.status_code == 200:
-				with open(fullname, 'wb') as f:
-					f.write(r.content)
-					updated = time.time()
-		except:
-			pass	# Better luck next time.
+	try:
+		r = requests.get(ecb_url)
+		if r.status_code == 200:
+			with open(fullname, 'wb') as f:
+				f.write(r.content)
+				global updated
+				updated = time.time()
+	except:
+		pass	# Better luck next time.
 
 	with ZipFile(fullname, 'r') as z:
 		csv = z.read(csvname).decode()
@@ -36,7 +36,7 @@ def load(path='data/', refresh_threshold=24*60*60):
 
 
 def convert(amount, from_currency, to_currency):
-	if not cur2eur:
+	if not cur2eur or time.time()-updated > refresh_threshold:
 		load()
 	eur = amount
 	if from_currency != 'EUR':
