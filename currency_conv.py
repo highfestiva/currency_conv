@@ -1,32 +1,32 @@
 #!/usr/bin/env python3
 
 import requests
-import os.path
 import time
+import urllib.request
 from zipfile import ZipFile
 
 
 cur2eur = {}
 csvname  = 'eurofxref.csv'
-filename = 'eurofxref.zip'
+filename = 'data/eurofxref.zip'
 ecb_url = 'https://www.ecb.europa.eu/stats/eurofxref/eurofxref.zip'
 updated = 0
 refresh_threshold = 24*60*60
 
 
-def load(path='data/'):
-	fullname = os.path.join(path, filename)
+def load():
 	try:
-		r = requests.get(ecb_url)
+		r = requests.get(ecb_url, proxies=urllib.request.getproxies())
 		if r.status_code == 200:
-			with open(fullname, 'wb') as f:
+			with open(filename, 'wb') as f:
 				f.write(r.content)
 				global updated
 				updated = time.time()
-	except:
+	except Exception as e:
+		print(e)
 		pass	# Better luck next time.
 
-	with ZipFile(fullname, 'r') as z:
+	with ZipFile(filename, 'r') as z:
 		csv = z.read(csvname).decode()
 	lines = csv.strip().splitlines()
 	currencies = [w.strip() for w in lines[0].split(',')[1:] if w.strip()]
